@@ -1,0 +1,50 @@
+The drawing of the penguin is governed by three files and a method.  
+
+Shapes.cpp and Shapes.h
+-----------------------------------------------
+This is where I defined how to create my three base shapes; a triangular prism
+for the feet, a half-cylinder for each half of the mouth, and a frustrum for 
+the rest of the body parts.  Each of these shapes is drawn centered around the 
+origin.
+
+For each of these shapes, I define a Vector representing the normal of each 
+face, and then calculate the normal for each vertex.
+
+Additionally, a method 'draw' takes in a function and a flag value so that if 
+I need to draw the outline with the fill the code does not have to be repeated.
+
+
+penguin.h
+------------------------------------------------
+This file is separated from main.cpp purely for readability; it simply includes
+the constant values used to scale and draw the penguin body parts, and wrapper
+functions calling the appropriate draw functions from 'Shapes' with the constant
+values, so that a simple function can be passed to 'draw'. 
+
+This file wraps everything included inside a namespace 'Penguin' for ease of access
+and understanding
+
+main.cpp
+------------------------------------------------
+  display
+  --------
+  In this method I have essentially five sections.  The first if statement 
+  simply retrieves the appropriate keyframe information if animation is on (this
+  was already implemented). Next I define the render style, enabling/disabling
+  backface culling and z-buffering as necessary, and defining the polygon mode. 
+  Third I set the light location and attributes  if lighting is on, otherwise 
+  I disable lighting and reset the background.  Fourth I set the appropriate 
+  material settings, with metallized material having more shine and reflecting
+  more of all three types of light (ambient, diffuse, and specular). Finally I 
+  traverse the kinematic tree of the penguin, pushing the translate and rotate 
+  matrix of each element onto the stack before traversing down to its children,
+  then calling its scale (if necessary), rotation shift and draw functions once
+  all of its children have been completed.  
+  
+  spinners + keyframes
+  --------------------
+  I added the material and lighting option fields to the glui, but did not added
+  them to the keyframe object. This was intentional, allowing the user to change 
+  material and render type, along with lighting position during an animation
+  playback.  
+   
