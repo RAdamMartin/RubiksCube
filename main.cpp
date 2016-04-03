@@ -1,35 +1,3 @@
-/***********************************************************
-             CSC418, Winter 2016
- 
-                 penguin.cpp
-                 author: Mike Pratscher
-                 based on code by: Eron Steger, J. Radulovich
-
-		Main source file for assignment 2
-		Uses OpenGL, GLUT and GLUI libraries
-  
-    Instructions:
-        Please read the assignment page to determine 
-        exactly what needs to be implemented.  Then read 
-        over this file and become acquainted with its 
-        design. In particular, see lines marked 'README'.
-		
-		Be sure to also look over keyframe.h and vector.h.
-		While no changes are necessary to these files, looking
-		them over will allow you to better understand their
-		functionality and capabilites.
-
-        Add source code where it appears appropriate. In
-        particular, see lines marked 'TODO'.
-
-        You should not need to change the overall structure
-        of the program. However it should be clear what
-        your changes do, and you should use sufficient comments
-        to explain your code.  While the point of the assignment
-        is to draw and animate the character, you will
-        also be marked based on your design.
-
-***********************************************************/
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
@@ -38,24 +6,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <cmath>
 
 #include "keyframe.h"
 #include "timer.h"
 #include "vector.h"
-#include "shapes.h"
 #include "image.h"
-#include "penguin.h"
+#include "RubiksCube.h"
 
 // *************** GLOBAL VARIABLES *************************
-
-
 const float PI = 3.14159;
 
 const float SPINNER_SPEED = 0.1;
 
 // --------------- USER INTERFACE VARIABLES -----------------
-
 // Window settings
 int windowID;				// Glut window ID (for display)
 int Win[2];					// window (x,y) size
@@ -69,7 +33,6 @@ GLUI_StaticText* status;	// Status message ("Status: <msg>")
 
 
 // ---------------- ANIMATION VARIABLES ---------------------
-
 // Camera settings
 bool updateCamZPos = false;
 int  lastX = 0;
@@ -85,8 +48,6 @@ const GLdouble NEAR_CLIP   = 0.5;
 const GLdouble FAR_CLIP    = 1000.0;
 
 // Render settings
-enum { WIREFRAME, SOLID, OUTLINED };	// README: the different render styles
-int renderStyle = WIREFRAME;			// README: the selected render style
 enum { NONE, MATTE, METALLIZED };	// README: the different material styles
 int materialStyle = NONE;
 
@@ -125,59 +86,9 @@ const float TIME_MAX = 10.0;	// README: specifies the max time of the animation
 const float SEC_PER_FRAME = 1.0 / 60.0;
 
 // Joint settings
-
-// README: This is the key data structure for
-// updating keyframes in the keyframe list and
-// for driving the animation.
-//   i) When updating a keyframe, use the values
-//      in this data structure to update the
-//      appropriate keyframe in the keyframe list.
-//  ii) When calculating the interpolated pose,
-//      the resulting pose vector is placed into
-//      this data structure. (This code is already
-//      in place - see the animate() function)
-// iii) When drawing the scene, use the values in
-//      this data structure (which are set in the
-//      animate() function as described above) to
-//      specify the appropriate transformations.
 Keyframe* joint_ui_data;
 
-// README: To change the range of a particular DOF,
-// simply change the appropriate min/max values below
-const float ROOT_TRANSLATE_X_MIN = -5.0;
-const float ROOT_TRANSLATE_X_MAX =  5.0;
-const float ROOT_TRANSLATE_Y_MIN = -5.0;
-const float ROOT_TRANSLATE_Y_MAX =  5.0;
-const float ROOT_TRANSLATE_Z_MIN = -5.0;
-const float ROOT_TRANSLATE_Z_MAX =  5.0;
-const float ROOT_ROTATE_X_MIN    = -180.0;
-const float ROOT_ROTATE_X_MAX    =  180.0;
-const float ROOT_ROTATE_Y_MIN    = -180.0;
-const float ROOT_ROTATE_Y_MAX    =  180.0;
-const float ROOT_ROTATE_Z_MIN    = -180.0;
-const float ROOT_ROTATE_Z_MAX    =  180.0;
-const float HEAD_MIN             = -180.0;
-const float HEAD_MAX             =  180.0;
-const float ARM_SCALE_MIN        =  0.5;
-const float ARM_SCALE_MAX        =  2.0;
-const float SHOULDER_PITCH_MIN   = -45.0;
-const float SHOULDER_PITCH_MAX   =  45.0;
-const float SHOULDER_YAW_MIN     = -45.0;
-const float SHOULDER_YAW_MAX     =  45.0;
-const float SHOULDER_ROLL_MIN    = -45.0;
-const float SHOULDER_ROLL_MAX    =  45.0;
-const float HIP_PITCH_MIN        = -45.0;
-const float HIP_PITCH_MAX        =  45.0;
-const float HIP_YAW_MIN          = -45.0;
-const float HIP_YAW_MAX          =  45.0;
-const float HIP_ROLL_MIN         = -45.0;
-const float HIP_ROLL_MAX         =  45.0;
-const float BEAK_MIN             =  0.0;
-const float BEAK_MAX             =  1.0;
-const float ELBOW_MIN            =  0.0;
-const float ELBOW_MAX            = 75.0;
-const float KNEE_MIN             =  0.0;
-const float KNEE_MAX             = 75.0;
+RubiksCube cube = RubiksCube();
 
 
 // ***********  FUNCTION HEADER DECLARATIONS ****************
@@ -469,141 +380,90 @@ void initGlui()
 	glui_joints = GLUI_Master.create_glui("Joint Control", 0, Win[0]+12, 0);
 
     // Create controls to specify root position and orientation
-	glui_panel = glui_joints->add_panel("Root");
+	glui_panel = glui_joints->add_panel("Main Rotation");
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "translate x:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_TRANSLATE_X));
-	glui_spinner->set_float_limits(ROOT_TRANSLATE_X_MIN, ROOT_TRANSLATE_X_MAX, GLUI_LIMIT_CLAMP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, 
+                                                     "rotate x:",
+                                                     GLUI_SPINNER_FLOAT, 
+                                                     joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_X));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "translate y:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_TRANSLATE_Y));
-	glui_spinner->set_float_limits(ROOT_TRANSLATE_Y_MIN, ROOT_TRANSLATE_Y_MAX, GLUI_LIMIT_CLAMP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate y:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_Y));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "translate z:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_TRANSLATE_Z));
-	glui_spinner->set_float_limits(ROOT_TRANSLATE_Z_MIN, ROOT_TRANSLATE_Z_MAX, GLUI_LIMIT_CLAMP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate z:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_Z));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
+	glui_spinner->set_speed(SPINNER_SPEED);
+    
+    glui_joints->add_column(true);
+    glui_panel = glui_joints->add_panel("Faces");
+
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate green face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::G_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
+	glui_spinner->set_speed(SPINNER_SPEED);
+    
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate blue face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::B_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "rotate x:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_X));
-	glui_spinner->set_float_limits(ROOT_ROTATE_X_MIN, ROOT_ROTATE_X_MAX, GLUI_LIMIT_WRAP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate white face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::W_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "rotate y:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_Y));
-	glui_spinner->set_float_limits(ROOT_ROTATE_Y_MIN, ROOT_ROTATE_Y_MAX, GLUI_LIMIT_WRAP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate yellow face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::Y_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "rotate z:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::ROOT_ROTATE_Z));
-	glui_spinner->set_float_limits(ROOT_ROTATE_Z_MIN, ROOT_ROTATE_Z_MAX, GLUI_LIMIT_WRAP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate red face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::R_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
-	// Create controls to specify head rotation
-	glui_panel = glui_joints->add_panel("Head");
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "head:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::HEAD));
-	glui_spinner->set_float_limits(HEAD_MIN, HEAD_MAX, GLUI_LIMIT_CLAMP);
+	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate orange face:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::O_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
-
-	// Create controls to specify beak
-	glui_panel = glui_joints->add_panel("Beak");
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "beak:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::BEAK));
-	glui_spinner->set_float_limits(BEAK_MIN, BEAK_MAX, GLUI_LIMIT_CLAMP);
+    
+    glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate vertical middle:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::VER_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
-
-
-	glui_joints->add_column(false);
-
-
-	// Create controls to specify right arm
-	glui_panel = glui_joints->add_panel("Right arm");
-	
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "arm scale:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_ARM_SCALE));
-	glui_spinner->set_float_limits(ARM_SCALE_MIN, ARM_SCALE_MAX, GLUI_LIMIT_CLAMP);
-    glui_spinner->set_float_val(1.0);
-	glui_spinner->set_speed(SPINNER_SPEED);
-	
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder pitch:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_SHOULDER_PITCH));
-	glui_spinner->set_float_limits(SHOULDER_PITCH_MIN, SHOULDER_PITCH_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder yaw:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_SHOULDER_YAW));
-	glui_spinner->set_float_limits(SHOULDER_YAW_MIN, SHOULDER_YAW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder roll:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_SHOULDER_ROLL));
-	glui_spinner->set_float_limits(SHOULDER_ROLL_MIN, SHOULDER_ROLL_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "elbow:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_ELBOW));
-	glui_spinner->set_float_limits(ELBOW_MIN, ELBOW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	// Create controls to specify left arm
-	glui_panel = glui_joints->add_panel("Left arm");
-	
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "arm scale:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_ARM_SCALE));
-	glui_spinner->set_float_limits(ARM_SCALE_MIN, ARM_SCALE_MAX, GLUI_LIMIT_CLAMP);
-    glui_spinner->set_float_val(1.0);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder pitch:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_SHOULDER_PITCH));
-	glui_spinner->set_float_limits(SHOULDER_PITCH_MIN, SHOULDER_PITCH_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder yaw:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_SHOULDER_YAW));
-	glui_spinner->set_float_limits(SHOULDER_YAW_MIN, SHOULDER_YAW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "shoulder roll:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_SHOULDER_ROLL));
-	glui_spinner->set_float_limits(SHOULDER_ROLL_MIN, SHOULDER_ROLL_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "elbow:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_ELBOW));
-	glui_spinner->set_float_limits(ELBOW_MIN, ELBOW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-
-	glui_joints->add_column(false);
-
-
-	// Create controls to specify right leg
-	glui_panel = glui_joints->add_panel("Right leg");
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip pitch:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_HIP_PITCH));
-	glui_spinner->set_float_limits(HIP_PITCH_MIN, HIP_PITCH_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip yaw:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_HIP_YAW));
-	glui_spinner->set_float_limits(HIP_YAW_MIN, HIP_YAW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip roll:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_HIP_ROLL));
-	glui_spinner->set_float_limits(HIP_ROLL_MIN, HIP_ROLL_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "knee:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::R_KNEE));
-	glui_spinner->set_float_limits(KNEE_MIN, KNEE_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	// Create controls to specify left leg
-	glui_panel = glui_joints->add_panel("Left leg");
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip pitch:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_HIP_PITCH));
-	glui_spinner->set_float_limits(HIP_PITCH_MIN, HIP_PITCH_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip yaw:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_HIP_YAW));
-	glui_spinner->set_float_limits(HIP_YAW_MIN, HIP_YAW_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "hip roll:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_HIP_ROLL));
-	glui_spinner->set_float_limits(HIP_ROLL_MIN, HIP_ROLL_MAX, GLUI_LIMIT_CLAMP);
-	glui_spinner->set_speed(SPINNER_SPEED);
-
-	glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "knee:", GLUI_SPINNER_FLOAT, joint_ui_data->getDOFPtr(Keyframe::L_KNEE));
-	glui_spinner->set_float_limits(KNEE_MIN, KNEE_MAX, GLUI_LIMIT_CLAMP);
+    
+    glui_spinner = glui_joints->add_spinner_to_panel(glui_panel,
+                                                     "rotate horizontal middle:",
+                                                     GLUI_SPINNER_FLOAT,
+                                                     joint_ui_data->getDOFPtr(Keyframe::HOR_ROTATE));
+	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
 
     // Create controls to specify lighting
+    glui_joints->add_column(true);
 	glui_panel = glui_joints->add_panel("Light Controls");
     
     glui_spinner = glui_joints->add_spinner_to_panel(glui_panel, "Pos:", GLUI_SPINNER_FLOAT, &lightTheta);
@@ -665,14 +525,7 @@ void initGlui()
    	glui_render->add_radiobutton_to_group(glui_radio_group, "None");
     glui_render->add_radiobutton_to_group(glui_radio_group, "Matte");
 	glui_render->add_radiobutton_to_group(glui_radio_group, "Mettallic");
-    
-	// Create control to specify the render style
-	glui_panel = glui_render->add_panel("Render Style");
-	glui_radio_group = glui_render->add_radiogroup_to_panel(glui_panel, &renderStyle);
-	glui_render->add_radiobutton_to_group(glui_radio_group, "Wireframe");
-	glui_render->add_radiobutton_to_group(glui_radio_group, "Solid");
-	glui_render->add_radiobutton_to_group(glui_radio_group, "Solid w/ outlines");
-	//
+    	//
 	// ***************************************************
 
 
@@ -810,22 +663,9 @@ void display(void)
 	}
 
     //Set render style
-    glDepthFunc(GL_LESS);
-    if (renderStyle == WIREFRAME){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-    } else if (renderStyle == SOLID){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-    } else if (renderStyle == OUTLINED) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glPolygonOffset(1.0,1.0);
-    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
     
     //If the light is on, set its location based on camera and enable lighting,
     //depth tests and vector normalization.  Otherwise disable lighting and normalization
@@ -907,155 +747,11 @@ void display(void)
     glMaterialf(GL_FRONT,GL_SHININESS,shine*128.0);
     
 	glColor3f(0.5, 1.0, 1.0);
-    int ds = (renderStyle == OUTLINED);
 	glPushMatrix();
         // Start Body
-		glTranslatef(joint_ui_data->getDOF(Keyframe::ROOT_TRANSLATE_X),
-					 joint_ui_data->getDOF(Keyframe::ROOT_TRANSLATE_Y),
-					 joint_ui_data->getDOF(Keyframe::ROOT_TRANSLATE_Z));
 		glRotatef(joint_ui_data->getDOF(Keyframe::ROOT_ROTATE_X), 1.0, 0.0, 0.0);
 		glRotatef(joint_ui_data->getDOF(Keyframe::ROOT_ROTATE_Y), 0.0, 1.0, 0.0);
         glRotatef(joint_ui_data->getDOF(Keyframe::ROOT_ROTATE_Z), 0.0, 0.0, 1.0);
-        
-        glPushMatrix();
-            // Start Head
-            glTranslatef(0.0, Penguin::BODY_HEIGHT, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::HEAD), 0.0, 1.0, 0.0);
-            glPushMatrix();
-                //Start Upper Beak
-                glTranslatef(0.0,
-                             Penguin::HEAD_HEIGHT,
-                             (Penguin::HEAD_LOWER_DEPTH+Penguin::HEAD_UPPER_DEPTH)/2);
-                glTranslatef(0.0,0.0,Penguin::LIP_LENGTH/2);
-                glScalef(1,0.5,1);
-                glPushMatrix();
-                    //Start Lower Beak
-                    glTranslatef(0.0,
-                                -Penguin::LIP_RADIUS-joint_ui_data->getDOF(Keyframe::BEAK),
-                                0.0);
-                    glRotatef(180, 0.0, 0.0, 1.0);
-                    draw(Penguin::drawLip, ds); 
-                    //End Lower Beak
-                glPopMatrix();
-                draw(Penguin::drawLip, ds);
-                //End Upper Beak
-            glPopMatrix();
-            glTranslatef(0.0, Penguin::HEAD_HEIGHT, 0.0);
-            draw(Penguin::drawHead, ds);
-            //End Head
-        glPopMatrix();
- 
-        glPushMatrix();
-            //Start Right Arm (Stage Left)
-            glTranslatef(Penguin::BODY_WIDTH + Penguin::ARM_WIDTH, 0.0, 0.0);
-            glTranslatef(0.0, Penguin::ARM_HEIGHT-0.2, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_SHOULDER_YAW), 1.0, 0.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_SHOULDER_ROLL), 0.0, 1.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_SHOULDER_PITCH), 0.0, 0.0, 1.0);
-            glScalef(joint_ui_data->getDOF(Keyframe::R_ARM_SCALE),
-                     joint_ui_data->getDOF(Keyframe::R_ARM_SCALE),
-                     joint_ui_data->getDOF(Keyframe::R_ARM_SCALE));
-            glPushMatrix();
-                //Start Right Hand
-                glTranslatef(0.0, -Penguin::ARM_HEIGHT-2*Penguin::HAND_Y_SCALE-0.2, 0.0);
-                glRotatef(joint_ui_data->getDOF(Keyframe::R_ELBOW), 0.0, 0.0, 1.0);
-                glTranslatef(0.0, -Penguin::HAND_Y_SCALE+0.1, 0.0);
-                glScalef(Penguin::HAND_X_SCALE,
-                         Penguin::HAND_Y_SCALE, 
-                         Penguin::HAND_Z_SCALE); 
-                draw(Penguin::drawHand, ds);
-                //End Right Hand
-            glPopMatrix();
-            glTranslatef(0.0, -Penguin::ARM_HEIGHT+0.2, 0.0);
-            draw(Penguin::drawArm, ds);
-            //End Right Arm
-        glPopMatrix();
-        
-        glPushMatrix();
-            //Start Left Arm (Stage Right)
-            glTranslatef(-(Penguin::BODY_WIDTH + Penguin::ARM_WIDTH), 0.0, 0.0);
-            glTranslatef(0.0, Penguin::ARM_HEIGHT-0.2, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_SHOULDER_YAW), 1.0, 0.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_SHOULDER_ROLL), 0.0, 1.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_SHOULDER_PITCH), 0.0, 0.0, 1.0);
-            glScalef(joint_ui_data->getDOF(Keyframe::L_ARM_SCALE),
-                     joint_ui_data->getDOF(Keyframe::L_ARM_SCALE),
-                     joint_ui_data->getDOF(Keyframe::L_ARM_SCALE));
-            glPushMatrix();
-                //Start Left Hand
-                glTranslatef(0.0, -Penguin::ARM_HEIGHT-2*Penguin::HAND_Y_SCALE-0.2, 0.0);
-                glRotatef(-joint_ui_data->getDOF(Keyframe::L_ELBOW), 0.0, 0.0, 1.0);
-                glTranslatef(0.0, -Penguin::HAND_Y_SCALE+0.1, 0.0);
-                glScalef(Penguin::HAND_X_SCALE,
-                         Penguin::HAND_Y_SCALE, 
-                         Penguin::HAND_Z_SCALE); 
-                draw(Penguin::drawHand, ds);
-                //End Left Hand
-            glPopMatrix();
-            glTranslatef(0.0, -Penguin::ARM_HEIGHT+0.2, 0.0);
-            draw(Penguin::drawArm, ds);
-            //End Left Arm
-        glPopMatrix();
-        
-        glPushMatrix();
-            //Start Right Leg (Stage Left)
-            glTranslatef(Penguin::LEG_X_SHIFT,
-                         -Penguin::BODY_HEIGHT-0.1,
-                         0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_HIP_YAW), 1.0, 0.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_HIP_ROLL), 0.0, 1.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::R_HIP_PITCH), 0.0, 0.0, 1.0);
-            
-            glPushMatrix();
-                //Start Right Foot
-                glTranslatef(0.0, -2*Penguin::LEG_Y_SCALE+Penguin::FOOT_Y_SCALE, 0.0);
-                glRotatef(joint_ui_data->getDOF(Keyframe::R_KNEE), 1.0, 0.0, 0.0);
-                glTranslatef(0.0, 0.0, Penguin::FOOT_Z_SCALE);
-                glScalef(Penguin::FOOT_X_SCALE,
-                         Penguin::FOOT_Y_SCALE, 
-                         Penguin::FOOT_Z_SCALE); 
-                draw(Penguin::drawFoot, ds);
-                //End Right Foot
-            glPopMatrix();
-            
-            glTranslatef(0.0, -Penguin::LEG_Y_SCALE+0.1, 0.0);
-            glScalef(Penguin::LEG_X_SCALE,
-                     Penguin::LEG_Y_SCALE, 
-                     Penguin::LEG_Z_SCALE); 
-            draw(Penguin::drawLeg, ds);
-            //End Right Leg
-        glPopMatrix();
-        
-        glPushMatrix();
-            //Start Left Leg (Stage Right)
-            glTranslatef(-Penguin::LEG_X_SHIFT,
-                         -Penguin::BODY_HEIGHT-0.1,
-                         0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_HIP_YAW), 1.0, 0.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_HIP_ROLL), 0.0, 1.0, 0.0);
-            glRotatef(joint_ui_data->getDOF(Keyframe::L_HIP_PITCH), 0.0, 0.0, 1.0);
-            
-            glPushMatrix();
-                //Start Left Foot
-                glTranslatef(0.0, -2*Penguin::LEG_Y_SCALE+Penguin::FOOT_Y_SCALE, 0.0);
-                glRotatef(joint_ui_data->getDOF(Keyframe::L_KNEE), 1.0, 0.0, 0.0);
-                glTranslatef(0.0, 0.0, Penguin::FOOT_Z_SCALE);
-                glScalef(Penguin::FOOT_X_SCALE,
-                         Penguin::FOOT_Y_SCALE, 
-                         Penguin::FOOT_Z_SCALE); 
-                draw(Penguin::drawFoot, ds);
-                //End Left Foot
-            glPopMatrix();
-            
-            glTranslatef(0.0, -Penguin::LEG_Y_SCALE+0.1, 0.0);
-            glScalef(Penguin::LEG_X_SCALE,
-                     Penguin::LEG_Y_SCALE, 
-                     Penguin::LEG_Z_SCALE); 
-            draw(Penguin::drawLeg, ds);
-            //End Left Leg
-        glPopMatrix();
-        
-        draw(Penguin::drawBody, ds);
         //End Body
 	glPopMatrix();
 

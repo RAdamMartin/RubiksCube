@@ -1,3 +1,5 @@
+#include <iostream>
+
 class Colour {
 public:
 	Colour(); 

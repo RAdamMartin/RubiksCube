@@ -48,7 +48,7 @@ PROGRAM	      = penguin
 CSRCS         =
 
 # Define all C++ source files here
-CPPSRCS       = image.cpp shapes.cpp vector.cpp main.cpp 
+CPPSRCS       = image.cpp vector.cpp Colour.cpp RubiksCube.cpp main.cpp 
 
 ##############################################################################
 # Define additional rules that make should know about in order to compile our

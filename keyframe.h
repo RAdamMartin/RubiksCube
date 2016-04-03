@@ -30,20 +30,11 @@ public:
 	// NOTE: If you decide to add more DOFs, be sure to add the
 	// corresponding enums _BEFORE_ the NUM_JOINT_ENUM element
 	//
-	enum { ROOT_TRANSLATE_X, ROOT_TRANSLATE_Y, ROOT_TRANSLATE_Z,
-		   ROOT_ROTATE_X,    ROOT_ROTATE_Y,    ROOT_ROTATE_Z,
-		   HEAD,
-		   R_ARM_SCALE,
-		   R_SHOULDER_PITCH, R_SHOULDER_YAW,   R_SHOULDER_ROLL,
-		   L_ARM_SCALE,
-		   L_SHOULDER_PITCH, L_SHOULDER_YAW,   L_SHOULDER_ROLL,
-		   R_HIP_PITCH,      R_HIP_YAW,        R_HIP_ROLL,
-		   L_HIP_PITCH,      L_HIP_YAW,        L_HIP_ROLL,
-		   BEAK,
-		   R_ELBOW,
-		   L_ELBOW,
-		   R_KNEE,
-		   L_KNEE,
+	enum { ROOT_ROTATE_X, ROOT_ROTATE_Y, ROOT_ROTATE_Z,
+		   W_ROTATE, Y_ROTATE, 
+           G_ROTATE, B_ROTATE,
+           R_ROTATE, O_ROTATE,
+           HOR_ROTATE, VER_ROTATE,
 		   NUM_JOINT_ENUM };
 
 	// constructor
