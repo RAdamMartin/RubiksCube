@@ -4,7 +4,6 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <iostream>
-#include "vector.h"
 
 void setGlColour(int ind, Colour * colours){
     /*Material*/
@@ -29,28 +28,30 @@ void setGlColour(int ind, Colour * colours){
 
 void drawCube(Colour * cols){    
     //Assign normal vectors for faces and calculate normals for vertices
-    Vector top   = Vector(3);
-    Vector bot   = Vector(3);
-    Vector left  = Vector(3);
-    Vector right = Vector(3);
-    Vector front = Vector(3);
-    Vector back  = Vector(3);
+    Vector3D top   = Vector3D( 0.0,  1.0,  0.0);
+    Vector3D bot   = Vector3D( 0.0, -1.0,  0.0);
+    Vector3D left  = Vector3D( 1.0,  0.0,  0.0);
+    Vector3D right = Vector3D(-1.0,  0.0,  0.0);
+    Vector3D front = Vector3D( 0.0,  0.0,  1.0);
+    Vector3D back  = Vector3D( 0.0,  0.0, -1.0);
+        
+    Vector3D A = (bot + front + left );
+    Vector3D B = (bot + front + right);
+    Vector3D C = (top + front + right);
+    Vector3D D = (top + front + left );
+    Vector3D E = (bot + back  + left );
+    Vector3D F = (bot + back  + right);
+    Vector3D G = (top + back  + right);
+    Vector3D H = (top + back  + left );
     
-    top.set3d  ( 0.0,  1.0,  0.0);
-    bot.set3d  ( 0.0, -1.0,  0.0);
-    left.set3d ( 1.0,  0.0,  0.0);
-    right.set3d(-1.0,  0.0,  0.0);
-    front.set3d( 0.0,  0.0,  1.0);
-    back.set3d ( 0.0,  0.0, -1.0);
-    
-    Vector A = (bot + front + left )/3;
-    Vector B = (bot + front + right)/3;
-    Vector C = (top + front + right)/3;
-    Vector D = (top + front + left )/3;
-    Vector E = (bot + back  + left )/3;
-    Vector F = (bot + back  + right)/3;
-    Vector G = (top + back  + right)/3;
-    Vector H = (top + back  + left)/3;
+    A.normalize();
+    B.normalize();
+    C.normalize();
+    D.normalize();
+    E.normalize();
+    F.normalize();
+    G.normalize();
+    H.normalize();
 	glBegin(GL_QUADS);
 		// draw front face
         setGlColour(0, cols);
@@ -143,7 +144,7 @@ void Piece::clamp(){
     } else {
         off_ang_z = (int)(off_ang_z+axis[2]*(360*axis[2]+theta))%360;
     }
-    
+    std::cout << this << " : " << off_ang_x << ", " << off_ang_y << ", " << off_ang_z << std::endl;
     theta = 0;
 };
 
@@ -192,9 +193,9 @@ void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
         pieces[1] = p1;
         pieces[2] = p2;
     } else if (src == links[1]){
-        pieces[2] = p0;
+        pieces[8] = p0;
         pieces[5] = p1;
-        pieces[8] = p2;
+        pieces[2] = p2;
     } else if (src == links[2]){
         pieces[6] = p0;
         pieces[7] = p1;
@@ -234,6 +235,7 @@ void Face::clamp(){
             dir = -1;
         }
         for(int i = 0; i < 9; i++){
+            std::cout << i << " ";
             pieces[i]->clamp();
             if (t_x){
                 pieces[i]->translate(t_x, (1-i/3)*2, dir*(1-i%3)*2);
@@ -241,7 +243,6 @@ void Face::clamp(){
                 pieces[i]->translate(-dir*(1-i%3)*2, t_y, (i/3-1)*2);
             } else {
                 pieces[i]->translate(-dir*(1-i%3)*2, dir*(1-i/3)*2, t_z);
-                // std::cout << (pieces[i]) << " = " << (i%3-dir)*2<<", "<< (1-i/3)*2<<", "<< t_z <<std::endl;
             }
         }
     }

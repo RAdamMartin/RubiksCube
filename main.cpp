@@ -8,7 +8,7 @@
 #include <string.h>
 #include <cmath>
 
-#include "vector.h"
+#include "util.h"
 #include "timer.h"
 #include "RubiksCube.h"
 

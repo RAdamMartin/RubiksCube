@@ -1,7 +1,7 @@
 #ifndef RUBIKS_PIECE_H_INCLUDED
 #define RUBIKS_PIECE_H_INCLUDED
 
-#include "Colour.h"
+#include "util.h"
 
 class Piece{
     public: 
@@ -21,6 +21,7 @@ class Piece{
         float off_ang_x;
         float off_ang_z;
         float off_ang_y;
+        double matrix[16];
 };
 
 class Face{
