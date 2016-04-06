@@ -8,13 +8,17 @@
 
 void setGlColour(int ind, Colour * colours){
     /*Material*/
+    float shine = 0.4; 
     float r = (float)(colours[ind][0]/255.0);
     float g = (float)(colours[ind][1]/255.0);
     float b = (float)(colours[ind][2]/255.0);
-    GLfloat mat_ambient[] = { r, g, b, 1};
     GLfloat mat_diffuse[] = { r, g, b, 1 };
-    GLfloat mat_specular[]= { r, g, b, 1};
-    float shine = 0.2; 
+    GLfloat mat_ambient[] = { r, g, b, 1};
+    // r /= 2.0;
+    // g /= 2.0;
+    // b /= 2.0;
+    GLfloat mat_specular[]= { 0.5, 0.5, 0.5, 1};
+
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
@@ -118,30 +122,38 @@ void drawCube(Colour * cols){
 };
 
 Piece::Piece(){
-    
+    theta = 0;
+    axis[0] = 0;
+    axis[1] = 0;
+    axis[2] = 0;
 };
 
 void Piece::clamp(){
     if (theta >= 45){
-        theta = 90;
+        theta = (theta >= 135) ? 180 : 90;
     } else if (theta <= -45){
-        theta = -90;
+        theta = (theta <= -135) ? -180 : -90;
     } else {
         theta = 0;
     }
-    glPushMatrix();
-        glLoadMatrixd(matrix);
-        glPushMatrix();
-            glRotated(theta, axis[0], axis[1], axis[2]);
-            glGetDoublev(GL_MODELVIEW_MATRIX, matrix);
-        glPopMatrix();
-    glPopMatrix();
+    if (axis[0]){
+        off_ang_x = (int)(off_ang_x+axis[0]*(360*axis[0]+theta))%360;
+    } else if (axis[1]){
+        off_ang_y = (int)(off_ang_y+axis[1]*(360*axis[1]+theta))%360;
+    } else {
+        off_ang_z = (int)(off_ang_z+axis[2]*(360*axis[2]+theta))%360;
+    }
+    
     theta = 0;
 };
 
 void Piece::draw(){
     glPushMatrix();
+        glRotatef(theta, axis[0], axis[1], axis[2]);
         glTranslated(t_x, t_y, t_z);
+        glRotatef(off_ang_x, 1, 0 , 0);
+        glRotatef(off_ang_y, 0, 1 , 0);
+        glRotatef(off_ang_z, 0, 0 , 1);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         drawCube(colours);
         Colour c = Colour(0,0,0);
@@ -151,7 +163,12 @@ void Piece::draw(){
     glPopMatrix(); 
 }
 
-void Piece::rotate(double theta, double x, double y, double z){};
+void Piece::rotate(float ang, double x, double y, double z){
+    theta = ang;
+    axis[0] = x;
+    axis[1] = y;
+    axis[2] = z;
+};
 
 void Piece::setColours(Colour * cols){
     for (int i = 0; i < 6; i++){
@@ -166,7 +183,7 @@ void Piece::translate(double x, double y, double z){
 
 
 Face::Face(){
-    dir = 0;
+    theta = 0;
 };
 
 void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
@@ -192,34 +209,48 @@ void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
 };
 
 void Face::clamp(){
-    if (dir != 0){
-        if(dir == 1){
-            links[0]->addPieces(this, pieces[0], pieces[3], pieces[6]);
-            links[1]->addPieces(this, pieces[2], pieces[1], pieces[0]);
-            links[2]->addPieces(this, pieces[8], pieces[5], pieces[2]);
-            links[3]->addPieces(this, pieces[6], pieces[7], pieces[8]);
-        } else { //dir == -1
+    if (theta < 0){
+        theta += 360;
+    }
+    if (theta > 0){
+        while (theta > 45){
             links[0]->addPieces(this, pieces[2], pieces[5], pieces[8]);
             links[1]->addPieces(this, pieces[8], pieces[7], pieces[6]);
             links[2]->addPieces(this, pieces[6], pieces[3], pieces[0]);
             links[3]->addPieces(this, pieces[0], pieces[1], pieces[2]);
+            Piece *temp_pieces[9];
+            for(int i = 0; i < 9; i++){
+                temp_pieces[i] = pieces[i];
+            }
+            for(int i = 0; i < 3; i++){
+                pieces[i]   = temp_pieces[(i*3)+2]; 
+                pieces[i+3] = temp_pieces[(i*3)+1]; 
+                pieces[i+6] = temp_pieces[(i*3)]; 
+            }
+            theta -= 90;
         }
-        
+        int dir = 1;
+        if (t_x+t_y+t_z < 0) {
+            dir = -1;
+        }
         for(int i = 0; i < 9; i++){
             pieces[i]->clamp();
+            if (t_x){
+                pieces[i]->translate(t_x, (1-i/3)*2, dir*(1-i%3)*2);
+            } else if (t_y){
+                pieces[i]->translate(-dir*(1-i%3)*2, t_y, (i/3-1)*2);
+            } else {
+                pieces[i]->translate(-dir*(1-i%3)*2, dir*(1-i/3)*2, t_z);
+                // std::cout << (pieces[i]) << " = " << (i%3-dir)*2<<", "<< (1-i/3)*2<<", "<< t_z <<std::endl;
+            }
         }
     }
 }
 
-void Face::rotate(double theta){
-    dir = 0;
-    if (theta >= 45){
-        dir = 1;
-    } else if (theta <= -45){
-        dir = -1;
-    }
+void Face::rotate(float angle){
+    theta = angle;
     for(int i = 0; i < 9; i++){
-        pieces[i]->rotate(theta, axis[0], axis[1], axis[2]);
+        pieces[i]->rotate(angle, axis[0], axis[1], axis[2]);
     }
 }
 
@@ -242,6 +273,12 @@ void Face::setPieces(Piece **src){
     }
 };
 
+void Face::setTranslate(double x, double y, double z){
+    t_x = x;
+    t_y = y;
+    t_z = z;
+}
+
 
 RubiksCube::RubiksCube(){
     colours[_white]  = Colour(255,255,255);
@@ -249,8 +286,8 @@ RubiksCube::RubiksCube(){
     colours[_green]  = Colour(  0, 62, 38);
     colours[_blue]   = Colour(  0, 32, 73);
     colours[_red]    = Colour( 77, 12, 23);
-    colours[_orange] = Colour(255,165,  0);
-    Colour black     = Colour(  0,  0,  0);
+    colours[_orange] = Colour(255, 55,  0);
+    Colour black     = Colour(  2,  2,  2);
     
     /*Initialize translations*/
     for (int i = 0; i < 9; i++){
@@ -266,8 +303,9 @@ RubiksCube::RubiksCube(){
         } else if (i < 3){
             y = 2;
         }
-        
+        // std::cout << pieces+i <<" = " << &(pieces[i]) << " = " << pieces + i*sizeof(Piece) << std::endl;        
         pieces[i].translate(x, y, 2); //White Face
+        // std::cout << &(pieces[i]) << " = " << x << ", " << y << ", " << 2 <<std::endl; 
         pieces[i+9].translate(x, y, 0); //Middle Slice
         pieces[i+18].translate(x, y, -2); //Yellow Face
     }
@@ -350,37 +388,93 @@ RubiksCube::RubiksCube(){
     temp_colours[4] = colours[_green];
     pieces[15].setColours(temp_colours);
     
-    Piece * temp_pieces[9];
+    /* Initialize faces */
+    //Set Axes
+    faces[ _white].setAxis(0, 0, 1);
+    faces[_yellow].setAxis(0, 0, -1);
+    faces[ _green].setAxis(-1, 0, 0);
+    faces[  _blue].setAxis(1, 0, 0);
+    faces[   _red].setAxis(0, -1, 0);
+    faces[_orange].setAxis(0, 1, 0);
     
-    faces[_white].setLinks(faces+_orange*sizeof(Face),
-                           faces+_blue*sizeof(Face),
-                           faces+_red*sizeof(Face),
-                           faces+_green*sizeof(Face));
+    //Set Translation
+    faces[ _white].setTranslate( 0, 0, 2);
+    faces[_yellow].setTranslate( 0, 0,-2);
+    faces[  _blue].setTranslate( 2, 0, 0);
+    faces[ _green].setTranslate(-2, 0, 0);
+    faces[_orange].setTranslate( 0, 2, 0);
+    faces[   _red].setTranslate( 0,-2, 0);
+    
+    //Set Links    
+    faces[_white].setLinks(&(faces[_orange]),
+                           &(faces[  _blue]),
+                           &(faces[   _red]),
+                           &(faces[ _green]));
                                
-    faces[_yellow].setLinks(faces+_orange*sizeof(Face),
-                            faces+_green*sizeof(Face),
-                            faces+_red*sizeof(Face),
-                            faces+_blue*sizeof(Face));
+    faces[_yellow].setLinks(&(faces[_orange]),
+                            &(faces[ _green]),
+                            &(faces[   _red]),
+                            &(faces[  _blue]));
                                 
-    faces[_green].setLinks(faces+_orange*sizeof(Face),
-                           faces+_white*sizeof(Face),
-                           faces+_red*sizeof(Face),
-                           faces+_yellow*sizeof(Face));
+    faces[_green].setLinks(&(faces[_orange]),
+                           &(faces[ _white]),
+                           &(faces[   _red]),
+                           &(faces[_yellow]));
                                
-    faces[_blue].setLinks(faces+_orange*sizeof(Face),
-                          faces+_yellow*sizeof(Face),
-                          faces+_red*sizeof(Face),
-                          faces+_white*sizeof(Face));
+    faces[_blue].setLinks(&(faces[_orange]),
+                          &(faces[_yellow]),
+                          &(faces[   _red]),
+                          &(faces[ _white]));
                               
-    faces[_red].setLinks(faces+_white*sizeof(Face),
-                         faces+_blue*sizeof(Face),
-                         faces+_yellow*sizeof(Face),
-                         faces+_green*sizeof(Face));
+    faces[_red].setLinks(&(faces[_yellow]),
+                         &(faces[  _blue]),
+                         &(faces[ _white]),
+                         &(faces[ _green]));
                                
-    faces[_orange].setLinks(faces+_yellow*sizeof(Face),
-                            faces+_blue*sizeof(Face),
-                            faces+_white*sizeof(Face),
-                            faces+_green*sizeof(Face));
+    faces[_orange].setLinks(&(faces[_yellow]),
+                            &(faces[  _blue]),
+                            &(faces[ _white]),
+                            &(faces[ _green]));
+                            
+    //Set pieces
+    Piece *temp_pieces[9];
+    for(int i=0; i < 9; i++){
+        temp_pieces[i] = &(pieces[i]);//*sizeof(Piece);
+    }
+    faces[_white].setPieces(temp_pieces);
+    
+    for(int i=0; i < 9; i++){
+        temp_pieces[i] = &(pieces[i+18]);
+    }
+    faces[_yellow].setPieces(temp_pieces);
+    
+    for(int i=0; i < 3; i++){
+        temp_pieces[i]   = &(pieces[18 - 9*i]);
+        temp_pieces[i+3] = &(pieces[21 - 9*i]);
+        temp_pieces[i+6] = &(pieces[24 - 9*i]);
+    }
+    faces[_green].setPieces(temp_pieces);
+    
+    for(int i=0; i < 3; i++){
+        temp_pieces[i]   = &(pieces[2 + 9*i]);
+        temp_pieces[i+3] = &(pieces[5 + 9*i]);
+        temp_pieces[i+6] = &(pieces[8 + 9*i]);
+    }
+    faces[_blue].setPieces(temp_pieces);
+    
+    for(int i=0; i < 3; i++){
+        temp_pieces[i]   = &(pieces[26 - i]);
+        temp_pieces[i+3] = &(pieces[17 - i]);
+        temp_pieces[i+6] = &(pieces[8 - i]);
+    }
+    faces[_red].setPieces(temp_pieces);
+    
+    for(int i=0; i < 3; i++){
+        temp_pieces[i]   = &(pieces[18 + i]);
+        temp_pieces[i+3] = &(pieces[9 + i]);
+        temp_pieces[i+6] = &(pieces[i]);
+    }
+    faces[_orange].setPieces(temp_pieces);
 };
 
 void RubiksCube::clamp(){
@@ -397,6 +491,6 @@ void RubiksCube::draw(){
     }
 };
 
-void RubiksCube::rotateFace(side face, double theta){
+void RubiksCube::rotateFace(side face, float theta){
     faces[face].rotate(theta);
 };

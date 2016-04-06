@@ -45,10 +45,15 @@ const GLdouble CAMERA_FOVY = 60.0;
 const GLdouble NEAR_CLIP   = 0.5;
 const GLdouble FAR_CLIP    = 1000.0;
 
-RubiksCube cube;
+RubiksCube cube = RubiksCube();
 float root_rotate_x;
 float root_rotate_y;
 float root_rotate_z;
+
+float face_rotate;
+int target_face;
+int prev_target;
+GLUI_Spinner *glui_rot_spinner;
 
 // ***********  FUNCTION HEADER DECLARATIONS ****************
 // Initialization functions
@@ -102,7 +107,7 @@ int main(int argc, char** argv)
 void initDS()
 {
     frameRateTimer = new Timer();
-    cube = RubiksCube();
+    target_face = prev_target = 0;
 }
 
 
@@ -139,6 +144,19 @@ void clamp(){
 
 // Callback idle function for animating the scene
 void animate(){
+    if (target_face != prev_target){
+        if (face_rotate >= 45 || face_rotate <= -45){
+            cube.clamp();
+        } else {
+            cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
+        }
+        prev_target = target_face;
+        face_rotate = 0;
+        glui_rot_spinner->set_float_val(0.0);
+    } else {    
+        cube.rotateFace(static_cast<RubiksCube::side>(target_face), face_rotate);
+    }
+    
 	if (frameRateTimer->elapsed() > SEC_PER_FRAME )
 	{
 		// Tell glut window to update itself. This will cause the display()
@@ -188,6 +206,22 @@ void initGlui()
 	glui_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_spinner->set_speed(SPINNER_SPEED);
     
+    glui_panel = glui_joints->add_panel("Face Rotation");
+    glui_radio_group = glui_joints->add_radiogroup_to_panel(glui_panel, &target_face);
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "White");
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "Yellow");
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "Green");
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "Blue");
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "Red");
+    glui_joints->add_radiobutton_to_group(glui_radio_group, "Orange");
+    
+	glui_rot_spinner = glui_joints->add_spinner_to_panel(glui_panel, 
+                                                     "rotation :",
+                                                     GLUI_SPINNER_FLOAT, 
+                                                     &face_rotate);
+	glui_rot_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
+	glui_rot_spinner->set_speed(SPINNER_SPEED);
+    
 }
 
 
@@ -225,7 +259,7 @@ void display(void)
     glLoadIdentity();
 
 	// Specify camera transformation
-	glTranslatef(camXPos, camYPos, camZPos);
+	glTranslatef(2*camXPos, 2*camYPos, 2*camZPos);
 
     //Set render style
     glDepthFunc(GL_LESS);
