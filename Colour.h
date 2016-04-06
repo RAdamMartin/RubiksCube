@@ -9,9 +9,7 @@ public:
 	Colour& operator =(const Colour& other); 
 	Colour operator *(const Colour& other); 
 	double& operator[](int i);  
-	double operator[](int i) const; 
-    
-	void clamp(); 	
+	double operator[](int i) const; 	
 
 private:
 	double m_data[3];

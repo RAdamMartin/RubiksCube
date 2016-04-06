@@ -38,13 +38,6 @@ double Colour::operator[](int i) const {
 	return m_data[i];
 }
 
-void Colour::clamp() {
-	for (int i = 0; i < 3; i++) {
-		if (m_data[i] > 1.0) m_data[i] = 1.0; 
-		if (m_data[i] < 0.0) m_data[i] = 0.0; 
-	}
-}
-
 Colour operator *(double s, const Colour& c)
 {
   return Colour(s*c[0], s*c[1], s*c[2]);

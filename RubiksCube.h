@@ -5,16 +5,20 @@
 
 class Piece{
     public: 
-        Piece(){};
-        void clamp(){};
-        void draw(){};
-        void rotate(double theta, double x, double y, double z){};
-        void setColours(Colour * cols){};
-        void translate(double x, double y, double z){};
+        Piece();
+        void clamp();
+        void draw();
+        void rotate(double theta, double x, double y, double z);
+        void setColours(Colour * cols);
+        void translate(double x, double y, double z);
     protected:
         Colour colours[6];
         double theta;
+        double axis[3];
         double matrix[16];
+        double t_x;
+        double t_y;
+        double t_z;
 };
 
 class Face{

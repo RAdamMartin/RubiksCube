@@ -48,7 +48,7 @@ PROGRAM	      = rubiks
 CSRCS         =
 
 # Define all C++ source files here
-CPPSRCS       = image.cpp vector.cpp Colour.cpp RubiksCube.cpp main.cpp 
+CPPSRCS       = vector.cpp Colour.cpp RubiksCube.cpp main.cpp 
 
 ##############################################################################
 # Define additional rules that make should know about in order to compile our
