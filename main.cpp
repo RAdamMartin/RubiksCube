@@ -55,6 +55,11 @@ int target_face;
 int prev_target;
 GLUI_Spinner *glui_rot_spinner;
 
+bool random_animate = false;
+RubiksCube::side random_face;
+float random_rotate = 0;
+int random_count = 0;
+
 // ***********  FUNCTION HEADER DECLARATIONS ****************
 // Initialization functions
 void initDS();
@@ -145,10 +150,14 @@ void randomizeCube(int){
     prev_target = target_face;
     face_rotate = 0;
     glui_rot_spinner->set_float_val(0.0);
-    for (int i = 0; i < 100; i++){
-        cube.rotateFace(static_cast<RubiksCube::side>(rand()%6), 90);
-        cube.clamp();
-    }
+    random_face = static_cast<RubiksCube::side>(rand()%6);
+    random_count=0;
+    random_rotate=0;
+    random_animate=true;
+    // for (int i = 0; i < 100; i++){
+    //     cube.rotateFace(static_cast<RubiksCube::side>(rand()%6), 90);
+    //     cube.clamp();
+    // }
 }
 
 void rotateFace(int){
@@ -167,7 +176,22 @@ void clamp(){
 
 // Callback idle function for animating the scene
 void animate(){
-    if (target_face != prev_target){
+    if (random_animate){
+        if (frameRateTimer->elapsed() > SEC_PER_FRAME ){
+            random_rotate += 2;
+            cube.rotateFace(random_face, random_rotate);
+            if (random_rotate >= 90){
+                cube.clamp();
+                random_face = static_cast<RubiksCube::side>(rand()%6);
+                random_rotate=0;
+                random_count+=1;
+            }
+            if(random_count > 20){
+                random_animate = false;
+            }
+        }
+    }
+    else if (target_face != prev_target){
         if (face_rotate >= 45 || face_rotate <= -45){
             cube.clamp();
         } else {
