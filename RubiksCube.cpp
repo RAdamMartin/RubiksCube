@@ -7,16 +7,15 @@
 
 Matrix4x4 getRotationMatrix(int rots, double * axis){
     Matrix4x4 M;
-    
-    if (axis[0]+axis[1]+axis[2] == -1){
-        rots = -rots;
-    }
-    
+      
     double s = rots/std::abs(rots);
     double c = 0;
     if (rots == 2 || rots == -2){
         s = 0;
         c = rots/std::abs(rots);
+    }
+    if (axis[0]+axis[1]+axis[2] == -1){
+        s = -s;
     }
     if (axis[0]){
         M.setVal( 5, c);
@@ -149,7 +148,6 @@ void drawCube(Colour * cols){
 		glVertex3f( 1.00, -1.00, 1.00); //B
         glNormal3f(A[0], A[1], A[2]);
 		glVertex3f(-1.00, -1.00, 1.00); //A
-        // glColor3f(1.00, 0.0, 1.00);
 	glEnd();
 };
 
@@ -404,14 +402,6 @@ RubiksCube::RubiksCube(){
     faces[  _blue].setAxis(1, 0, 0);
     faces[   _red].setAxis(0, -1, 0);
     faces[_orange].setAxis(0, 1, 0);
-    
-    //Set Translation
-    // faces[ _white].setTranslate( 0, 0, 2);
-    // faces[_yellow].setTranslate( 0, 0,-2);
-    // faces[  _blue].setTranslate( 2, 0, 0);
-    // faces[ _green].setTranslate(-2, 0, 0);
-    // faces[_orange].setTranslate( 0, 2, 0);
-    // faces[   _red].setTranslate( 0,-2, 0);
     
     //Set Links    
     faces[_white].setLinks(&(faces[_orange]),
