@@ -140,6 +140,7 @@ void quitButton(int)
 
 void randomizeCube(int){
     std::srand(time(NULL));
+    cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
     cube.rotateFace(static_cast<RubiksCube::side>(target_face), 0);
     prev_target = target_face;
     face_rotate = 0;
@@ -148,6 +149,16 @@ void randomizeCube(int){
         cube.rotateFace(static_cast<RubiksCube::side>(rand()%6), 90);
         cube.clamp();
     }
+}
+
+void rotateFace(int){
+    cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
+    prev_target = target_face;
+    face_rotate = 0;
+    glui_rot_spinner->set_float_val(0.0);
+    
+    cube.rotateFace(static_cast<RubiksCube::side>(target_face), 90);
+    cube.clamp();
 }
 
 void clamp(){
@@ -236,6 +247,7 @@ void initGlui()
 
 	// Add button to randomize cube
 	// glui_panel = glui_joints->add_panel("", GLUI_PANEL_NONE);
+	glui_joints->add_button_to_panel(glui_panel, "Rotate", 0, rotateFace);
 	glui_joints->add_button_to_panel(glui_panel, "Randomize", 0, randomizeCube);
 
 

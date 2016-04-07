@@ -483,10 +483,10 @@ void RubiksCube::clamp(){
     for (int i = 0; i < 6; i++){
         faces[i].clamp();
     }
-    for (int i = 0; i < 6; i++){
-        std::cout << i << " face :\n";
-        faces[i].print(); 
-    }
+    // for (int i = 0; i < 6; i++){
+    //     std::cout << i << " face :\n";
+    //     faces[i].print(); 
+    // }
 }
 
 void RubiksCube::draw(){
