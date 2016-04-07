@@ -9,27 +9,22 @@ Matrix4x4 getRotationMatrix(int rots, double * axis){
     Matrix4x4 M;
       
     double s = rots/std::abs(rots);
-    double c = 0;
-    if (rots == 2 || rots == -2){
-        s = 0;
-        c = rots/std::abs(rots);
-    }
     if (axis[0]+axis[1]+axis[2] == -1){
         s = -s;
     }
     if (axis[0]){
-        M.setVal( 5, c);
-        M.setVal(10, c);
+        M.setVal( 5, 0);
+        M.setVal(10, 0);
         M.setVal( 6,-s);
         M.setVal( 9, s);
     } else if (axis[1]){
-        M.setVal( 0, c);
-        M.setVal(10, c);
+        M.setVal( 0, 0);
+        M.setVal(10, 0);
         M.setVal( 2, s);
         M.setVal( 8,-s);
     } else {
-        M.setVal( 0, c);
-        M.setVal( 5, c);
+        M.setVal( 0, 0);
+        M.setVal( 5, 0);
         M.setVal( 1,-s);
         M.setVal( 4, s);
     }
@@ -162,8 +157,12 @@ void Piece::clamp(){
     int rots = round(theta/90.0);
     std::cout <<rots <<"\n"; 
     if (rots != 0){
-        std::cout << rotation;        
-        rotation = getRotationMatrix(rots, axis)*rotation;
+        int fact = std::abs(rots);
+        std::cout << rotation;
+        rotation = getRotationMatrix(rots/fact, axis)*rotation;
+        if (fact == 2){
+            rotation = getRotationMatrix(rots/fact, axis)*rotation;
+        }
         std::cout << rotation;
     }
     theta = 0;
