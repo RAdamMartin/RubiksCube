@@ -5,6 +5,40 @@
 #include <GL/glut.h>
 #include <iostream>
 
+Matrix4x4 getRotationMatrix(int rots, double * axis){
+    Matrix4x4 M;
+    
+    if (axis[0]+axis[1]+axis[2] == -1){
+        rots = -rots;
+    }
+    
+    double s = rots/std::abs(rots);
+    double c = 0;
+    if (rots == 2 || rots == -2){
+        s = 0;
+        c = rots/std::abs(rots);
+    }
+    if (axis[0]){
+        M.setVal( 5, c);
+        M.setVal(10, c);
+        M.setVal( 6,-s);
+        M.setVal( 9, s);
+    } else if (axis[1]){
+        M.setVal( 0, c);
+        M.setVal(10, c);
+        M.setVal( 2, s);
+        M.setVal( 8,-s);
+    } else {
+        M.setVal( 0, c);
+        M.setVal( 5, c);
+        M.setVal( 1,-s);
+        M.setVal( 4, s);
+    }
+    std::cout <<"Times:\n";
+    std::cout << M;
+    return M;
+}
+
 void setGlColour(int ind, Colour * colours){
     /*Material*/
     float shine = 0.4; 
@@ -13,9 +47,6 @@ void setGlColour(int ind, Colour * colours){
     float b = (float)(colours[ind][2]/255.0);
     GLfloat mat_diffuse[] = { r, g, b, 1 };
     GLfloat mat_ambient[] = { r, g, b, 1};
-    // r /= 2.0;
-    // g /= 2.0;
-    // b /= 2.0;
     GLfloat mat_specular[]= { 0.5, 0.5, 0.5, 1};
 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -130,31 +161,27 @@ Piece::Piece(){
 };
 
 void Piece::clamp(){
-    if (theta >= 45){
-        theta = (theta >= 135) ? 180 : 90;
-    } else if (theta <= -45){
-        theta = (theta <= -135) ? -180 : -90;
-    } else {
-        theta = 0;
+    int rots = round(theta/90.0);
+    std::cout <<rots <<"\n"; 
+    if (rots != 0){
+        std::cout << rotation;        
+        rotation = getRotationMatrix(rots, axis)*rotation;
+        std::cout << rotation;
     }
-    if (axis[0]){
-        off_ang_x = (int)(off_ang_x+axis[0]*(360*axis[0]+theta))%360;
-    } else if (axis[1]){
-        off_ang_y = (int)(off_ang_y+axis[1]*(360*axis[1]+theta))%360;
-    } else {
-        off_ang_z = (int)(off_ang_z+axis[2]*(360*axis[2]+theta))%360;
-    }
-    std::cout << this << " : " << off_ang_x << ", " << off_ang_y << ", " << off_ang_z << std::endl;
     theta = 0;
 };
 
 void Piece::draw(){
     glPushMatrix();
         glRotatef(theta, axis[0], axis[1], axis[2]);
-        glTranslated(t_x, t_y, t_z);
-        glRotatef(off_ang_x, 1, 0 , 0);
-        glRotatef(off_ang_y, 0, 1 , 0);
-        glRotatef(off_ang_z, 0, 0 , 1);
+        Vector4D col;
+        double matrix[16];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                matrix[i*4 + j] = rotation[j][i];
+            }
+        }
+        glMultMatrixd(matrix);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         drawCube(colours);
         Colour c = Colour(0,0,0);
@@ -176,10 +203,14 @@ void Piece::setColours(Colour * cols){
         colours[i] = cols[i];
     }
 };
-void Piece::translate(double x, double y, double z){
-    t_x = x;
-    t_y = y;
-    t_z = z;
+void Piece::translate(double x, double y, double z, int po){
+    // Matrix4x4 M;
+    rotation.setVal(3,x);
+    rotation.setVal(7,y);
+    rotation.setVal(11,z);
+    if (po){
+        std::cout << rotation << std::endl;
+    }
 };
 
 
@@ -230,20 +261,8 @@ void Face::clamp(){
             }
             theta -= 90;
         }
-        int dir = 1;
-        if (t_x+t_y+t_z < 0) {
-            dir = -1;
-        }
         for(int i = 0; i < 9; i++){
-            std::cout << i << " ";
             pieces[i]->clamp();
-            if (t_x){
-                pieces[i]->translate(t_x, (1-i/3)*2, dir*(1-i%3)*2);
-            } else if (t_y){
-                pieces[i]->translate(-dir*(1-i%3)*2, t_y, (i/3-1)*2);
-            } else {
-                pieces[i]->translate(-dir*(1-i%3)*2, dir*(1-i/3)*2, t_z);
-            }
         }
     }
 }
@@ -274,11 +293,11 @@ void Face::setPieces(Piece **src){
     }
 };
 
-void Face::setTranslate(double x, double y, double z){
-    t_x = x;
-    t_y = y;
-    t_z = z;
-}
+// void Face::setTranslate(double x, double y, double z){
+//     t_x = x;
+//     t_y = y;
+//     t_z = z;
+// }
 
 
 RubiksCube::RubiksCube(){
@@ -305,10 +324,10 @@ RubiksCube::RubiksCube(){
             y = 2;
         }
         // std::cout << pieces+i <<" = " << &(pieces[i]) << " = " << pieces + i*sizeof(Piece) << std::endl;        
-        pieces[i].translate(x, y, 2); //White Face
+        pieces[i].translate(x, y, 2, i==0); //White Face
         // std::cout << &(pieces[i]) << " = " << x << ", " << y << ", " << 2 <<std::endl; 
-        pieces[i+9].translate(x, y, 0); //Middle Slice
-        pieces[i+18].translate(x, y, -2); //Yellow Face
+        pieces[i+9].translate(x, y, 0, 0); //Middle Slice
+        pieces[i+18].translate(x, y, -2, 0); //Yellow Face
     }
     
     Colour temp_colours[6] = {black, black, black, black, black, black};
@@ -399,12 +418,12 @@ RubiksCube::RubiksCube(){
     faces[_orange].setAxis(0, 1, 0);
     
     //Set Translation
-    faces[ _white].setTranslate( 0, 0, 2);
-    faces[_yellow].setTranslate( 0, 0,-2);
-    faces[  _blue].setTranslate( 2, 0, 0);
-    faces[ _green].setTranslate(-2, 0, 0);
-    faces[_orange].setTranslate( 0, 2, 0);
-    faces[   _red].setTranslate( 0,-2, 0);
+    // faces[ _white].setTranslate( 0, 0, 2);
+    // faces[_yellow].setTranslate( 0, 0,-2);
+    // faces[  _blue].setTranslate( 2, 0, 0);
+    // faces[ _green].setTranslate(-2, 0, 0);
+    // faces[_orange].setTranslate( 0, 2, 0);
+    // faces[   _red].setTranslate( 0,-2, 0);
     
     //Set Links    
     faces[_white].setLinks(&(faces[_orange]),
@@ -486,9 +505,7 @@ void RubiksCube::clamp(){
 
 void RubiksCube::draw(){
     for (int i = 0; i < 27; i ++){
-        // glPushMatrix();
         pieces[i].draw();
-        // glPopMatrix();
     }
 };
 

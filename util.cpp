@@ -302,6 +302,11 @@ Matrix4x4 operator *(const Matrix4x4& a, const Matrix4x4& b) {
 	return ret;
 }
 
+void Matrix4x4::setVal(int ind, double val){
+    m_data[ind] = val;
+};
+
+
 Vector3D operator *(const Matrix4x4& M, const Vector3D& v) {
 	return Vector3D(
 			v[0] * M[0][0] + v[1] * M[0][1] + v[2] * M[0][2],
@@ -324,5 +329,5 @@ std::ostream& operator <<(std::ostream& os, const Matrix4x4& M) {
 		<< "[" << M[2][0] << " " << M[2][1] << " " 
 		<< M[2][2] << " " << M[2][3] << "]" << std::endl
 		<< "[" << M[3][0] << " " << M[3][1] << " " 
-		<< M[3][2] << " " << M[3][3] << "]";
+		<< M[3][2] << " " << M[3][3] << "]" << std::endl;
 }

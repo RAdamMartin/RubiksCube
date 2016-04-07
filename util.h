@@ -20,6 +20,13 @@
 #define M_PI	3.14159265358979323846
 #endif
 
+// int round(double x){
+//     if (x >= 0){
+//         return (int)x;
+//     }
+//     return -(int)(-x);
+// };
+
 class Vector3D {
 public:
 	Vector3D(); 
@@ -75,6 +82,8 @@ public:
   double *operator[](int row); 
 
   Matrix4x4 transpose() const; 
+  
+  void setVal(int ind, double val);
 		
 private:
   double m_data[16];

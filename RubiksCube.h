@@ -10,18 +10,12 @@ class Piece{
         void draw();
         void rotate(float theta, double x, double y, double z);
         void setColours(Colour * cols);
-        void translate(double x, double y, double z);
+        void translate(double x, double y, double z, int po);
     protected:
         Colour colours[6];
         float theta;
         double axis[3];
-        double t_x;
-        double t_y;
-        double t_z;
-        float off_ang_x;
-        float off_ang_z;
-        float off_ang_y;
-        double matrix[16];
+        Matrix4x4 rotation;
 };
 
 class Face{
@@ -33,15 +27,11 @@ class Face{
         void setAxis(double x, double y, double z);
         void setLinks(Face *top, Face *right, Face *bot, Face *left);
         void setPieces(Piece ** pieces);
-        void setTranslate(double x, double y, double z);
     protected:
         Face * links[4];
         Piece * pieces[9];
         double axis[3];
         float theta;
-        double t_x;
-        double t_y;
-        double t_z;
 };
 
 class RubiksCube
