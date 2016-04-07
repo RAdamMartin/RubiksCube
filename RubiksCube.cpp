@@ -427,9 +427,9 @@ RubiksCube::RubiksCube(){
                           &(faces[ _white]));
                               
     faces[_red].setLinks(&(faces[_yellow]),
-                         &(faces[  _blue]),
+                         &(faces[ _green]),
                          &(faces[ _white]),
-                         &(faces[ _green]));
+                         &(faces[  _blue]));
                                
     faces[_orange].setLinks(&(faces[_yellow]),
                             &(faces[  _blue]),

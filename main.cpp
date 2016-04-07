@@ -138,6 +138,18 @@ void quitButton(int)
   exit(0);
 }
 
+void randomizeCube(int){
+    std::srand(time(NULL));
+    cube.rotateFace(static_cast<RubiksCube::side>(target_face), 0);
+    prev_target = target_face;
+    face_rotate = 0;
+    glui_rot_spinner->set_float_val(0.0);
+    for (int i = 0; i < 100; i++){
+        cube.rotateFace(static_cast<RubiksCube::side>(rand()%6), 90);
+        cube.clamp();
+    }
+}
+
 void clamp(){
     
 }
@@ -221,6 +233,15 @@ void initGlui()
                                                      &face_rotate);
 	glui_rot_spinner->set_float_limits(-180, 180, GLUI_LIMIT_WRAP);
 	glui_rot_spinner->set_speed(SPINNER_SPEED);
+
+	// Add button to randomize cube
+	// glui_panel = glui_joints->add_panel("", GLUI_PANEL_NONE);
+	glui_joints->add_button_to_panel(glui_panel, "Randomize", 0, randomizeCube);
+
+
+	// Add button to quit
+	glui_panel = glui_joints->add_panel("", GLUI_PANEL_NONE);
+	glui_joints->add_button_to_panel(glui_panel, "Quit", 0, quitButton);
     
 }
 
