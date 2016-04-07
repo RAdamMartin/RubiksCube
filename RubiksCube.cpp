@@ -28,8 +28,8 @@ Matrix4x4 getRotationMatrix(int rots, double * axis){
         M.setVal( 1,-s);
         M.setVal( 4, s);
     }
-    std::cout <<"Times:\n";
-    std::cout << M;
+    // std::cout <<"Times:\n";
+    // std::cout << M;
     return M;
 }
 
@@ -155,15 +155,15 @@ Piece::Piece(){
 
 void Piece::clamp(){
     int rots = round(theta/90.0);
-    std::cout <<rots <<"\n"; 
+    // std::cout <<rots <<"\n"; 
     if (rots != 0){
         int fact = std::abs(rots);
-        std::cout << rotation;
+        // std::cout << rotation;
         rotation = getRotationMatrix(rots/fact, axis)*rotation;
         if (fact == 2){
             rotation = getRotationMatrix(rots/fact, axis)*rotation;
         }
-        std::cout << rotation;
+        // std::cout << rotation;
     }
     theta = 0;
 };
@@ -213,9 +213,9 @@ Face::Face(){
 
 void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
     if (src == links[0]){
-        pieces[0] = p0;
+        pieces[2] = p0;
         pieces[1] = p1;
-        pieces[2] = p2;
+        pieces[0] = p2;
     } else if (src == links[1]){
         pieces[8] = p0;
         pieces[5] = p1;
@@ -238,7 +238,7 @@ void Face::clamp(){
         theta += 360;
     }
     if (theta > 0){
-        while (theta > 45){
+        while (theta >= 45){
             links[0]->addPieces(this, pieces[2], pieces[5], pieces[8]);
             links[1]->addPieces(this, pieces[8], pieces[7], pieces[6]);
             links[2]->addPieces(this, pieces[6], pieces[3], pieces[0]);
@@ -311,8 +311,11 @@ RubiksCube::RubiksCube(){
             y = 2;
         }
         pieces[i].translate(x, y, 2); //White Face
+        pieces[i].id = i;
         pieces[i+9].translate(x, y, 0); //Middle Slice
+        pieces[i+9].id = i+9;
         pieces[i+18].translate(x, y, -2); //Yellow Face
+        pieces[i+18].id = i+18;
     }
     
     Colour temp_colours[6] = {black, black, black, black, black, black};
@@ -440,8 +443,10 @@ RubiksCube::RubiksCube(){
     }
     faces[_white].setPieces(temp_pieces);
     
-    for(int i=0; i < 9; i++){
-        temp_pieces[i] = &(pieces[i+18]);
+    for(int i=0; i < 3; i++){
+        temp_pieces[i]   = &(pieces[20-i]);
+        temp_pieces[i+3] = &(pieces[23-i]);
+        temp_pieces[i+6] = &(pieces[26-i]);
     }
     faces[_yellow].setPieces(temp_pieces);
     
@@ -477,6 +482,10 @@ RubiksCube::RubiksCube(){
 void RubiksCube::clamp(){
     for (int i = 0; i < 6; i++){
         faces[i].clamp();
+    }
+    for (int i = 0; i < 6; i++){
+        std::cout << i << " face :\n";
+        faces[i].print(); 
     }
 }
 

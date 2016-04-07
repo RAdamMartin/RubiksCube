@@ -11,6 +11,7 @@ class Piece{
         void rotate(float theta, double x, double y, double z);
         void setColours(Colour * cols);
         void translate(double x, double y, double z);
+        int id;
     protected:
         Colour colours[6];
         float theta;
@@ -27,6 +28,11 @@ class Face{
         void setAxis(double x, double y, double z);
         void setLinks(Face *top, Face *right, Face *bot, Face *left);
         void setPieces(Piece ** pieces);
+        void print(){
+            for(int i = 0; i < 9; i++){
+                std::cout << i << "= " << pieces[i]->id << ":"<<pieces[i]<<"\n"; 
+            }
+        }
     protected:
         Face * links[4];
         Piece * pieces[9];
