@@ -10,7 +10,7 @@ class Piece{
         void draw();
         void rotate(float theta, double x, double y, double z);
         void setColours(Colour * cols);
-        void translate(double x, double y, double z, int po);
+        void translate(double x, double y, double z);
     protected:
         Colour colours[6];
         float theta;

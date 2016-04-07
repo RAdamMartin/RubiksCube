@@ -203,14 +203,10 @@ void Piece::setColours(Colour * cols){
         colours[i] = cols[i];
     }
 };
-void Piece::translate(double x, double y, double z, int po){
-    // Matrix4x4 M;
+void Piece::translate(double x, double y, double z){
     rotation.setVal(3,x);
     rotation.setVal(7,y);
     rotation.setVal(11,z);
-    if (po){
-        std::cout << rotation << std::endl;
-    }
 };
 
 
@@ -293,12 +289,6 @@ void Face::setPieces(Piece **src){
     }
 };
 
-// void Face::setTranslate(double x, double y, double z){
-//     t_x = x;
-//     t_y = y;
-//     t_z = z;
-// }
-
 
 RubiksCube::RubiksCube(){
     colours[_white]  = Colour(255,255,255);
@@ -323,11 +313,9 @@ RubiksCube::RubiksCube(){
         } else if (i < 3){
             y = 2;
         }
-        // std::cout << pieces+i <<" = " << &(pieces[i]) << " = " << pieces + i*sizeof(Piece) << std::endl;        
-        pieces[i].translate(x, y, 2, i==0); //White Face
-        // std::cout << &(pieces[i]) << " = " << x << ", " << y << ", " << 2 <<std::endl; 
-        pieces[i+9].translate(x, y, 0, 0); //Middle Slice
-        pieces[i+18].translate(x, y, -2, 0); //Yellow Face
+        pieces[i].translate(x, y, 2); //White Face
+        pieces[i+9].translate(x, y, 0); //Middle Slice
+        pieces[i+18].translate(x, y, -2); //Yellow Face
     }
     
     Colour temp_colours[6] = {black, black, black, black, black, black};
