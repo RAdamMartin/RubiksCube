@@ -1,26 +1,13 @@
-CSC418 Assignment 2
+CSC418 Assignment 3 part 2
 -----------------------
 
-The compiled skeleton code will display a solid shaded
-cube located at the origin. You can move the cube using
-the UI (Root->translate x/y/z). A sample keyframe file
-has been provided and can be loaded to demonstrate the
-animation and render to file capabilites.
+For part 2 I made a Rubik's cube running make should create a file rubiks.
+The user interface is simple. You can rotate any one face at a 
+time by choosing it from the list. Once selected, changing the rotation field will 
+rotate the selected face. If you choose a new face, the rotation will revert to 0, 
+however if you had rotated the previous face more than 45 deg, it will snap to the 
+next rotation instead of going back to the previous. Alternatively, simply click 
+on the rotate button to rotate the selected face 90 deg counterclockwise (orange/yellow is up).  
 
-The following are NOT functional and need to be implemented
-by you:
--------------------------------------
-1) Update keyframe button DONE
-2) Render style selection buttons (wireframe / solid / solid w/ wireframe)
-3) A penguin model
 
-Start by reading through the code to become familiar with it.
-I suggest implementing things in the order mentioned above;
-it should make testing and debugging easier. 
-
-Once you are done with the above, add material properties,
-enable lighting, and add the necessary user interface controls
-to control the light source position.
-
-If you have questions, post to the forum.
-Good luck!
+If you have questions, my email address is radam.martin@mail.utoronto.ca. 
