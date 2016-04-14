@@ -161,13 +161,15 @@ void randomizeCube(int){
 }
 
 void rotateFace(int){
-    cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
-    prev_target = target_face;
-    face_rotate = 0;
-    glui_rot_spinner->set_float_val(0.0);
-    
-    cube.rotateFace(static_cast<RubiksCube::side>(target_face), 90);
-    cube.clamp();
+    if (!random_animate){
+        cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
+        prev_target = target_face;
+        face_rotate = 0;
+        glui_rot_spinner->set_float_val(0.0);
+        
+        cube.rotateFace(static_cast<RubiksCube::side>(target_face), 90);
+        cube.clamp();
+    }
 }
 
 void clamp(){

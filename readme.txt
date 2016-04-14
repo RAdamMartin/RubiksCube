@@ -8,7 +8,9 @@ selected face. If you choose a new face, the rotation will revert to 0, however
 if you had rotated the previous face more than 45 deg, it will snap to the next
 rotation instead of going back to the previous. Alternatively, simply click on 
 the rotate button to rotate the selected face 90 deg counter-clockwise 
-(orange/yellow is up).  
+(orange is up for white/yellow/green/blue, yellow is up for red/orange).
+
+Also note faces are identified by their center piece.  
 
 
 If you have questions, my email address is radam.martin@mail.utoronto.ca. 

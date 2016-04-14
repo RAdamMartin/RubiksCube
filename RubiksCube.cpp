@@ -5,10 +5,11 @@
 #include <GL/glut.h>
 #include <iostream>
 
+/*Takes in sin(theta) and the axis of rotation; outputs a rotation matrix*/
 Matrix4x4 getRotationMatrix(int rots, double * axis){
     Matrix4x4 M;
-      
     double s = rots/std::abs(rots);
+    /*Check if the axis we are rotating around is reversed*/
     if (axis[0]+axis[1]+axis[2] == -1){
         s = -s;
     }
@@ -28,11 +29,10 @@ Matrix4x4 getRotationMatrix(int rots, double * axis){
         M.setVal( 1,-s);
         M.setVal( 4, s);
     }
-    // std::cout <<"Times:\n";
-    // std::cout << M;
     return M;
 }
 
+/*Set the material for rendering*/
 void setGlColour(int ind, Colour * colours){
     /*Material*/
     float shine = 0.4; 
@@ -153,37 +153,36 @@ Piece::Piece(){
     axis[2] = 0;
 };
 
+/*Round current rotation off and set piece rotation matrix to reflect new rotations*/
 void Piece::clamp(){
     int rots = round(theta/90.0);
-    // std::cout <<rots <<"\n"; 
     if (rots != 0){
         int fact = std::abs(rots);
-        // std::cout << rotation;
         rotation = getRotationMatrix(rots/fact, axis)*rotation;
-        if (fact == 2){
+        if (fact == 2){ /*For 180 degree rotations */
             rotation = getRotationMatrix(rots/fact, axis)*rotation;
         }
-        // std::cout << rotation;
     }
     theta = 0;
 };
 
 void Piece::draw(){
     glPushMatrix();
-        glRotatef(theta, axis[0], axis[1], axis[2]);
+        glRotatef(theta, axis[0], axis[1], axis[2]); //Rotate by user input
         Vector4D col;
+        /*OpenGL uses inverse matrix notation, so neeed to invert*/
         double matrix[16];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 matrix[i*4 + j] = rotation[j][i];
             }
         }
-        glMultMatrixd(matrix);
+        glMultMatrixd(matrix); //Load transformation matrix
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        drawCube(colours);
+        drawCube(colours);  //Draw piece
         Colour c = Colour(0,0,0);
         Colour cols[6] = {c,c,c,c,c,c};
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //Draw Outline
         drawCube(cols);
     glPopMatrix(); 
 }
@@ -200,17 +199,19 @@ void Piece::setColours(Colour * cols){
         colours[i] = cols[i];
     }
 };
+
+/*Initialize rotation matrix*/
 void Piece::translate(double x, double y, double z){
     rotation.setVal(3,x);
     rotation.setVal(7,y);
     rotation.setVal(11,z);
 };
 
-
 Face::Face(){
     theta = 0;
 };
 
+/*Receive pieces rotated into face in appropriate location*/
 void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
     if (src == links[0]){
         pieces[2] = p0;
@@ -233,16 +234,19 @@ void Face::addPieces(Face * src, Piece *p0, Piece *p1, Piece *p2){
     }
 };
 
+/*Pass pieces to neighbouring faces and adjust locations on current face*/
 void Face::clamp(){
-    if (theta < 0){
+    if (theta < 0){ //Make theta positive
         theta += 360;
     }
     if (theta > 0){
-        while (theta >= 45){
+        while (theta >= 45){ //Pass pieces and move them once or twice depending on theta
+            //Pass pieces
             links[0]->addPieces(this, pieces[2], pieces[5], pieces[8]);
             links[1]->addPieces(this, pieces[8], pieces[7], pieces[6]);
             links[2]->addPieces(this, pieces[6], pieces[3], pieces[0]);
             links[3]->addPieces(this, pieces[0], pieces[1], pieces[2]);
+            //Move them on current face
             Piece *temp_pieces[9];
             for(int i = 0; i < 9; i++){
                 temp_pieces[i] = pieces[i];
@@ -254,12 +258,14 @@ void Face::clamp(){
             }
             theta -= 90;
         }
+        //Clamp each of the pieces
         for(int i = 0; i < 9; i++){
             pieces[i]->clamp();
         }
     }
 }
 
+/*Rotates each of the pieces linked to the face*/
 void Face::rotate(float angle){
     theta = angle;
     for(int i = 0; i < 9; i++){
@@ -267,12 +273,14 @@ void Face::rotate(float angle){
     }
 }
 
+/*Set which direction the face points*/
 void Face::setAxis(double x, double y, double z){
     axis[0] = x;
     axis[1] = y;
     axis[2] = z;
 }
 
+/*Set the neighbours of the face*/
 void Face::setLinks(Face *top, Face *right, Face *bot, Face *left){
     links[0] = top;
     links[1] = right;
@@ -280,6 +288,7 @@ void Face::setLinks(Face *top, Face *right, Face *bot, Face *left){
     links[3] = left;
 };
 
+/*Set the initial pieces linked to the face*/
 void Face::setPieces(Piece **src){
     for(int i=0; i < 9; i ++){
         pieces[i] = src[i]; 
@@ -436,7 +445,7 @@ RubiksCube::RubiksCube(){
                             &(faces[ _white]),
                             &(faces[ _green]));
                             
-    //Set pieces
+    /*Add initial pieces to faces */
     Piece *temp_pieces[9];
     for(int i=0; i < 9; i++){
         temp_pieces[i] = &(pieces[i]);//*sizeof(Piece);
@@ -483,10 +492,6 @@ void RubiksCube::clamp(){
     for (int i = 0; i < 6; i++){
         faces[i].clamp();
     }
-    // for (int i = 0; i < 6; i++){
-    //     std::cout << i << " face :\n";
-    //     faces[i].print(); 
-    // }
 }
 
 void RubiksCube::draw(){
