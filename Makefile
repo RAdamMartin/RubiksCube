@@ -9,16 +9,16 @@
 CC            = gcc
 
 # Define C++ compiler
-CCC	          = /usr/bin/g++
+CCC	          = gcc-5
 
 # Define C compiler options
 CFLAGS        = -Wall -c -g
 
 # Define C++ compiler options
-CCCFLAGS      = -Wall -c -g
+CCCFLAGS      = -std=c++11 -Wall -c -g
 
 # Define C/C++ pre-processor options
-CPPFLAGS      = -I./ -I/usr/include/GL
+CPPFLAGS      = -std=c++11 -I./ -I/usr/include/GL
 
 # Define location of OpenGL and GLU libraries along with their lib names
 GL_LIBS       = -L/usr/include/GL  -lGLU -lGL -lglut -lglui
@@ -59,7 +59,7 @@ CPPSRCS       = util.cpp RubiksCube.cpp main.cpp
 all : $(PROGRAM)
 
 # Define rule for compiling all C++ files
-%.o : %.cpp %.h
+%.o : %.cpp %.hpp
 	$(CCC) $(CCCFLAGS) $(CPPFLAGS) $*.cpp
 	
 # Define rule for compiling all C files

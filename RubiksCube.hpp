@@ -40,27 +40,26 @@ class Face{
         float theta;
 };
 
-class RubiksCube
-{
-public:
-    enum side{ _white=0,
-               _yellow=1,
-               _green=2,
-               _blue=3,
-               _red=4,
-               _orange=5};
-    enum axis{ _x=0,
-               _y=1,
-               _z=0};
-           
-    RubiksCube();
-    void clamp();
-    void draw();
-    void rotateFace(side face, float theta);
-protected:
-    Face faces[6];
-    Piece pieces[27];
-    Colour colours[6];
+class RubiksCube{
+    public:
+        enum side : int {_white=0,
+                        _yellow=1,
+                        _green=2,
+                        _blue=3,
+                        _red=4,
+                        _orange=5};
+        enum axis{ _x=0,
+                _y=1,
+                _z=0};
+            
+        RubiksCube();
+        void clamp();
+        void draw();
+        void rotateFace(side face, float theta);
+    protected:
+        Face faces[6];
+        Piece pieces[27];
+        Colour colours[6];
 };
 
 #endif

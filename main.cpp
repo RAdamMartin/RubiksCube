@@ -10,7 +10,7 @@
 
 #include "util.h"
 #include "timer.h"
-#include "RubiksCube.h"
+#include "RubiksCube.hpp"
 
 // *************** GLOBAL VARIABLES *************************
 const float PI = 3.14159;
@@ -33,17 +33,18 @@ const float SEC_PER_FRAME = 1.0 / 60.0;
 
 // Camera settings
 bool updateCamZPos = false;
+bool updateRotation = false;
 int  lastX = 0;
 int  lastY = 0;
 const float ZOOM_SCALE = 0.01;
 
-GLdouble camXPos =  0.0;
-GLdouble camYPos =  0.0;
-GLdouble camZPos = -7.5;
+GLfloat camXPos =  0.0;
+GLfloat camYPos =  0.0;
+GLfloat camZPos = -7.5;
 
-const GLdouble CAMERA_FOVY = 60.0;
-const GLdouble NEAR_CLIP   = 0.5;
-const GLdouble FAR_CLIP    = 1000.0;
+const GLfloat CAMERA_FOVY = 60.0;
+const GLfloat NEAR_CLIP   = 0.5;
+const GLfloat FAR_CLIP    = 1000.0;
 
 RubiksCube cube = RubiksCube();
 float root_rotate_x;
@@ -51,8 +52,8 @@ float root_rotate_y;
 float root_rotate_z;
 
 float face_rotate;
-int target_face;
-int prev_target;
+RubiksCube::side target_face;
+RubiksCube::side prev_target;
 GLUI_Spinner *glui_rot_spinner;
 
 bool random_animate = false;
@@ -70,7 +71,6 @@ void initGl();
 // Callbacks for handling events in glut
 void reshape(int w, int h);
 void animate();
-void clamp();
 void display(void);
 void mouse(int button, int state, int x, int y);
 void motion(int x, int y);
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 void initDS()
 {
     frameRateTimer = new Timer();
-    target_face = prev_target = 0;
+    target_face = prev_target = RubiksCube::_white;
 }
 
 
@@ -140,13 +140,13 @@ void initGlut(int argc, char** argv)
 // Quit button handler.  Called when the "quit" button is pressed.
 void quitButton(int)
 {
-  exit(0);
+    exit(0);
 }
 
 void randomizeCube(int){
     std::srand(time(NULL));
-    cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
-    cube.rotateFace(static_cast<RubiksCube::side>(target_face), 0);
+    cube.rotateFace(prev_target, 0);
+    cube.rotateFace(target_face, 0);
     prev_target = target_face;
     face_rotate = 0;
     glui_rot_spinner->set_float_val(0.0);
@@ -154,26 +154,18 @@ void randomizeCube(int){
     random_count=0;
     random_rotate=0;
     random_animate=true;
-    // for (int i = 0; i < 100; i++){
-    //     cube.rotateFace(static_cast<RubiksCube::side>(rand()%6), 90);
-    //     cube.clamp();
-    // }
 }
 
 void rotateFace(int){
     if (!random_animate){
-        cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
+        cube.rotateFace(prev_target, 0);
         prev_target = target_face;
         face_rotate = 0;
         glui_rot_spinner->set_float_val(0.0);
         
-        cube.rotateFace(static_cast<RubiksCube::side>(target_face), 90);
+        cube.rotateFace(target_face, 90);
         cube.clamp();
     }
-}
-
-void clamp(){
-    
 }
 
 // Callback idle function for animating the scene
@@ -197,13 +189,13 @@ void animate(){
         if (face_rotate >= 45 || face_rotate <= -45){
             cube.clamp();
         } else {
-            cube.rotateFace(static_cast<RubiksCube::side>(prev_target), 0);
+            cube.rotateFace(prev_target, 0);
         }
         prev_target = target_face;
         face_rotate = 0;
         glui_rot_spinner->set_float_val(0.0);
     } else {    
-        cube.rotateFace(static_cast<RubiksCube::side>(target_face), face_rotate);
+        cube.rotateFace(target_face, face_rotate);
     }
     
 	if (frameRateTimer->elapsed() > SEC_PER_FRAME )
@@ -256,7 +248,7 @@ void initGlui()
 	glui_spinner->set_speed(SPINNER_SPEED);
     
     glui_panel = glui_joints->add_panel("Face Rotation");
-    glui_radio_group = glui_joints->add_radiogroup_to_panel(glui_panel, &target_face);
+    glui_radio_group = glui_joints->add_radiogroup_to_panel(glui_panel, reinterpret_cast<int *>(& target_face));
     glui_joints->add_radiobutton_to_group(glui_radio_group, "White");
     glui_joints->add_radiobutton_to_group(glui_radio_group, "Yellow");
     glui_joints->add_radiobutton_to_group(glui_radio_group, "Green");
@@ -339,14 +331,14 @@ void display(void)
     const float LIGHT_RADIUS = 30.0;
     float lightTheta = 0;
     glEnable(GL_LIGHT0);
-    GLfloat light0_position[] = { camXPos+ std::sin(lightTheta/360*M_PI)*LIGHT_RADIUS,
-                                    camYPos,
-                                    5+camZPos+std::cos(lightTheta/360*M_PI)*LIGHT_RADIUS,
-                                    0.0 };
-    GLfloat spotDirection[] = { -std::sin(lightTheta/360*M_PI),
-                                    camYPos,
-                                    -std::cos(lightTheta/360*M_PI),
-                                    0.0 };
+    GLfloat light0_position[] = { camXPos+ static_cast<float>(std::sin(lightTheta/360*M_PI))*LIGHT_RADIUS,
+                                  camYPos,
+                                  5+camZPos+ static_cast<float>(std::cos(lightTheta/360*M_PI))*LIGHT_RADIUS,
+                                  0.0f };
+    GLfloat spotDirection[] = {  static_cast<float>(-std::sin(lightTheta/360*M_PI)),
+                                 camYPos,
+                                  static_cast<float>(-std::cos(lightTheta/360*M_PI)),
+                                 0.0f };
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseRGBA);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specularRGBA);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambiant);
@@ -376,17 +368,21 @@ void display(void)
 void mouse(int button, int state, int x, int y)
 {
 	// If the RMB is pressed and dragged then zoom in / out
-	if( button == GLUT_RIGHT_BUTTON )
-	{
-		if( state == GLUT_DOWN )
-		{
+	if(button == GLUT_RIGHT_BUTTON) {
+		if(state == GLUT_DOWN){
 			lastX = x;
 			lastY = y;
 			updateCamZPos = true;
-		}
-		else
-		{
+		} else {
 			updateCamZPos = false;
+		}
+	} else if( button == GLUT_LEFT_BUTTON ){
+		if(state == GLUT_DOWN){
+			lastX = x;
+			lastY = y;
+			updateRotation = true;
+		} else {
+			updateRotation = false;
 		}
 	}
 }
@@ -400,6 +396,16 @@ void motion(int x, int y)
 	{
 		// Update camera z position
 		camZPos += (x - lastX) * ZOOM_SCALE;
+		lastX = x;
+
+		// Redraw the scene from updated camera position
+		glutSetWindow(windowID);
+		glutPostRedisplay();
+	}
+	if( updateRotation )
+	{
+		// Update camera z position
+		face_rotate += (x - lastX);
 		lastX = x;
 
 		// Redraw the scene from updated camera position

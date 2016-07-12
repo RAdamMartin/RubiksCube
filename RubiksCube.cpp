@@ -1,4 +1,4 @@
-#include "RubiksCube.h"
+#include "RubiksCube.hpp"
 
 #include <GL/gl.h>
 #include <GL/glu.h>
